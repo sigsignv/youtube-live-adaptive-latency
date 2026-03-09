@@ -1,3 +1,9 @@
-# WXT + SolidJS
+# YouTube Live Adaptive Latency
 
-This template should help get you started developing with SolidJS in WXT.
+## Author
+
+- Sigsign <<sig@signote.cc>>
+
+## License
+
+Apache-2.0
