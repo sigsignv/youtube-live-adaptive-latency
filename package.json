@@ -1,0 +1,7 @@
+{
+  "private": true,
+  "name": "youtube-live-adaptive-latency",
+  "version": "0.1.0",
+  "author": "Sigsign <sig@signote.cc>",
+  "license": "Apache-2.0"
+}
