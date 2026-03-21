@@ -1,19 +1,23 @@
+import * as v from "valibot";
+
 declare global {
   interface DocumentEventMap {
     "yt-navigate-finish": CustomEvent<NavigateFinishDetail>;
   }
 }
 
-type NavigateFinishDetail = {
-  pageType: string;
-  response: {
-    playerResponse: {
-      videoDetails: {
-        isLive?: boolean;
-      };
-    };
-  };
-};
+const NavigateFinishDetailSchema = v.object({
+  pageType: v.literal("watch"),
+  response: v.object({
+    playerResponse: v.object({
+      videoDetails: v.object({
+        isLive: v.boolean(),
+      }),
+    }),
+  }),
+});
+
+type NavigateFinishDetail = v.InferOutput<typeof NavigateFinishDetailSchema>;
 
 type NavigateCallback = (signal: AbortSignal) => void;
 
@@ -22,22 +26,29 @@ export function onNavigate(callback: NavigateCallback) {
   const signal = controller.signal;
 
   const listener = (event: CustomEvent<NavigateFinishDetail>) => {
-    if (isLiveWatchPage(event.detail)) {
-      const tearDownController = new AbortController();
-      const tearDownSignal = tearDownController.signal;
-
-      const tearDown = () => tearDownController.abort();
-      document.addEventListener("yt-navigate-finish", tearDown, {
+    const r = v.safeParse(NavigateFinishDetailSchema, event.detail);
+    if (!r.success || !r.output.response.playerResponse.videoDetails.isLive) {
+      // Wait for the next navigation event
+      return document.addEventListener("yt-navigate-finish", listener, {
         once: true,
         signal,
       });
+    }
 
-      try {
-        const abortOrTearDownSignal = AbortSignal.any([signal, tearDownSignal]);
-        callback(abortOrTearDownSignal);
-      } catch (error) {
-        console.error("Error in navigation callback:", error);
-      }
+    const tearDownController = new AbortController();
+    const tearDownSignal = tearDownController.signal;
+
+    const tearDown = () => tearDownController.abort();
+    document.addEventListener("yt-navigate-finish", tearDown, {
+      once: true,
+      signal,
+    });
+
+    try {
+      const abortOrTearDownSignal = AbortSignal.any([signal, tearDownSignal]);
+      callback(abortOrTearDownSignal);
+    } catch (error) {
+      console.error("Error in navigation callback:", error);
     }
 
     document.addEventListener("yt-navigate-finish", listener, {
@@ -52,11 +63,4 @@ export function onNavigate(callback: NavigateCallback) {
   });
 
   return () => controller.abort();
-}
-
-function isLiveWatchPage(detail: NavigateFinishDetail): boolean {
-  return (
-    detail?.pageType === "watch" &&
-    !!detail?.response?.playerResponse?.videoDetails?.isLive
-  );
 }
