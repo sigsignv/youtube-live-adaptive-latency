@@ -1,7 +1,11 @@
 import * as v from "valibot";
 
+const LatencyClassSchema = v.picklist(["NORMAL", "LOW", "ULTRALOW"]);
+
+export type LatencyClass = v.InferOutput<typeof LatencyClassSchema>;
+
 const VideoStatsSchema = v.object({
-  latency_class: v.picklist(["NORMAL", "LOW", "ULTRALOW"]),
+  latency_class: LatencyClassSchema,
   live: v.picklist(["live", "dvr"]),
 });
 
