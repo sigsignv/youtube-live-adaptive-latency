@@ -1,16 +1,10 @@
 import { defineUnlistedScript } from "#imports";
+import {
+  getYouTubePlayer,
+  isLiveWatchPage,
+  type YouTubePlayer,
+} from "~/utils/player";
 import { onNavigate } from "../utils/events";
-
-type YouTubePlayer = HTMLDivElement & {
-  getVideoStats(): {
-    live?: "live" | "dvr";
-    latency_class: "NORMAL" | "LOW" | "ULTRALOW";
-  };
-  getAvailablePlaybackRates(): Array<number>;
-  getPlaybackRate(): number;
-  setPlaybackRate(rate: 0.75 | 1.0 | 1.25): void;
-  getMediaReferenceTime(): number;
-};
 
 export default defineUnlistedScript(() => {
   const script = document.currentScript;
@@ -35,12 +29,7 @@ export default defineUnlistedScript(() => {
   onNavigate((signal) => {
     const player = getYouTubePlayer();
 
-    if (!["live", "dvr"].includes(player.getVideoStats().live ?? "")) {
-      return;
-    }
-
-    const availableRates = player.getAvailablePlaybackRates();
-    if (!availableRates.includes(0.75) || !availableRates.includes(1.25)) {
+    if (!isLiveWatchPage(player)) {
       return;
     }
 
@@ -103,32 +92,10 @@ export default defineUnlistedScript(() => {
   });
 });
 
-function isYouTubePlayer(player: HTMLElement | null): player is YouTubePlayer {
-  if (!player || !(player instanceof HTMLElement)) {
-    return false;
-  }
-  const requiredFns = [
-    "getVideoStats",
-    "getAvailablePlaybackRates",
-    "getPlaybackRate",
-    "setPlaybackRate",
-    "getMediaReferenceTime",
-  ] as const;
-
-  return requiredFns.every((name) => typeof (player as any)[name] === "function");
-}
-
-function getYouTubePlayer(): YouTubePlayer {
-  const player = document.getElementById("movie_player");
-  if (!isYouTubePlayer(player)) {
-    throw new Error("YouTube Player is not available");
-  }
-
-  return player;
-}
-
 function getLiveLatency(player: YouTubePlayer): number | null {
   const current = Date.now() / 1000;
   const time = player.getMediaReferenceTime();
-  return typeof time === "number" && !Number.isNaN(time) ? current - time : null;
+  return typeof time === "number" && !Number.isNaN(time)
+    ? current - time
+    : null;
 }
