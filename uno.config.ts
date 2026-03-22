@@ -1,5 +1,5 @@
-import { defineConfig, presetMini } from "unocss";
+import { defineConfig, presetWind4 } from "unocss";
 
 export default defineConfig({
-  presets: [presetMini()],
+  presets: [presetWind4()],
 });
