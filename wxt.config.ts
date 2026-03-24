@@ -10,6 +10,11 @@ export default defineConfig({
       },
     ],
   },
+  vite: () => ({
+    define: {
+      "import.meta.vitest": "undefined",
+    },
+  }),
   modules: ["@wxt-dev/module-solid", "@wxt-dev/unocss"],
   imports: false,
   srcDir: "src",
