@@ -1,4 +1,5 @@
 import { defineUnlistedScript } from "#imports";
+import { applyLatencyControlCommand } from "@/utils/control";
 import {
   getYouTubePlayer,
   isLiveWatchPage,
@@ -49,31 +50,60 @@ export default defineUnlistedScript(() => {
       }
 
       if (latency < 2.4) {
-        console.log({ kind: "slow mode" });
-        player.setPlaybackRate(0.75);
-      } else if (latency > 2.6) {
-        console.log({ kind: "fast mode" });
-        player.setPlaybackRate(1.25);
-      }
-      setTimeout(stop, 50);
-    };
-
-    const stop = () => {
-      const rate = player.getPlaybackRate();
-      if (rate !== 0.75 && rate !== 1.25) {
-        return;
-      }
-      const latency = getLiveLatency(player);
-      if (latency === null) {
-        setTimeout(stop, 50);
-        return;
+        console.log({ kind: "slow mode", latency });
+        return applyLatencyControlCommand({
+          player,
+          targetPlaybackRate: 0.95,
+          stopConditions: [
+            () => {
+              const currentLatency = getLiveLatency(player);
+              return currentLatency === null || currentLatency > 2.5;
+            },
+          ],
+          pollIntervalMs: 50,
+        })
+          .then(() => console.log({ kind: "slow mode applied" }))
+          .catch((ex) => {
+            console.error("Failed to apply latency control command:", ex);
+          });
       }
 
-      if (latency > 2.4 && latency < 2.6) {
-        console.log({ kind: "stop fast/slow mode" });
-        player.setPlaybackRate(1.0);
-      } else {
-        setTimeout(stop, 50);
+      if (latency > 2.6 && latency < 3.5) {
+        console.log({ kind: "fast mode", latency });
+        return applyLatencyControlCommand({
+          player,
+          targetPlaybackRate: 1.05,
+          stopConditions: [
+            () => {
+              const currentLatency = getLiveLatency(player);
+              return currentLatency === null || currentLatency < 2.5;
+            },
+          ],
+          pollIntervalMs: 50,
+        })
+          .then(() => console.log({ kind: "fast mode applied" }))
+          .catch((ex) => {
+            console.error("Failed to apply latency control command:", ex);
+          });
+      }
+
+      if (latency >= 3.5) {
+        console.log({ kind: "super fast mode", latency });
+        return applyLatencyControlCommand({
+          player,
+          targetPlaybackRate: 1.25,
+          stopConditions: [
+            () => {
+              const currentLatency = getLiveLatency(player);
+              return currentLatency === null || currentLatency < 3.5;
+            },
+          ],
+          pollIntervalMs: 500,
+        })
+          .then(() => console.log({ kind: "super fast mode applied" }))
+          .catch((ex) => {
+            console.error("Failed to apply latency control command:", ex);
+          });
       }
     };
 
