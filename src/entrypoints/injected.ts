@@ -32,7 +32,7 @@ export default defineUnlistedScript(() => {
     }),
   );
 
-  onNavigate((signal) => {
+  onNavigate(() => {
     const player = getYouTubePlayer();
 
     if (!isLiveWatchPage(player)) {
@@ -131,11 +131,11 @@ export default defineUnlistedScript(() => {
     video.addEventListener("playing", adaptiveLatency);
     const timer = setInterval(adaptiveLatency, 10 * 1000);
 
-    signal.addEventListener("abort", () => {
+    return () => {
       clearInterval(timer);
       video.removeEventListener("playing", adaptiveLatency);
       observer.disconnect();
-    });
+    };
   });
 });
 
