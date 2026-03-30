@@ -26,9 +26,6 @@ type Disposer = () => void;
 export function onNavigate(callback: NavigateCallback) {
   let dispose: Disposer | undefined;
 
-  const controller = new AbortController();
-  const signal = controller.signal;
-
   const runDispose = () => {
     try {
       dispose?.();
@@ -38,7 +35,6 @@ export function onNavigate(callback: NavigateCallback) {
       dispose = undefined;
     }
   };
-  signal.addEventListener("abort", runDispose, { once: true });
 
   const listener = (event: CustomEvent<NavigateFinishDetail>) => {
     runDispose();
@@ -54,7 +50,10 @@ export function onNavigate(callback: NavigateCallback) {
       console.error("Error in navigation callback:", error);
     }
   };
-  document.addEventListener("yt-navigate-finish", listener, { signal });
+  document.addEventListener("yt-navigate-finish", listener);
 
-  return () => controller.abort();
+  return () => {
+    document.removeEventListener("yt-navigate-finish", listener);
+    runDispose();
+  };
 }
