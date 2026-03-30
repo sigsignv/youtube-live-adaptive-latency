@@ -1,11 +1,16 @@
 import { defineUnlistedScript } from "#imports";
-import { applyLatencyControlCommand } from "@/utils/control";
+import { applyLatencyControlCommand } from "~/utils/control";
+import { onNavigate } from "~/utils/events";
 import {
   getYouTubePlayer,
   isLiveWatchPage,
   type YouTubePlayer,
 } from "~/utils/player";
-import { onNavigate } from "../utils/events";
+import {
+  countBufferingEvents,
+  StabilityObserver,
+  type StabilityObserverEntry,
+} from "~/utils/stability";
 
 export default defineUnlistedScript(() => {
   const script = document.currentScript;
@@ -33,6 +38,11 @@ export default defineUnlistedScript(() => {
     if (!isLiveWatchPage(player)) {
       return;
     }
+
+    let stabilityEntries: StabilityObserverEntry[] = [];
+    const observer = new StabilityObserver((entries) => {
+      stabilityEntries = entries;
+    });
 
     const adaptiveLatency = () => {
       if (player.getPlaybackRate() !== 1.0) {
@@ -74,9 +84,14 @@ export default defineUnlistedScript(() => {
           player,
           targetPlaybackRate: 1.05,
           stopConditions: [
+            () => countBufferingEvents(stabilityEntries, 30_000) > 0,
             () => {
               const currentLatency = getLiveLatency(player);
-              return currentLatency === null || currentLatency < 2.5;
+              const buffering = countBufferingEvents(stabilityEntries, 300_000);
+              return (
+                currentLatency === null ||
+                currentLatency < 2.5 + buffering * 0.1
+              );
             },
           ],
           pollIntervalMs: 50,
@@ -111,6 +126,7 @@ export default defineUnlistedScript(() => {
     if (!video) {
       return;
     }
+    observer.observe(video);
 
     video.addEventListener("playing", adaptiveLatency);
     const timer = setInterval(adaptiveLatency, 10 * 1000);
@@ -118,6 +134,7 @@ export default defineUnlistedScript(() => {
     signal.addEventListener("abort", () => {
       clearInterval(timer);
       video.removeEventListener("playing", adaptiveLatency);
+      observer.disconnect();
     });
   });
 });
