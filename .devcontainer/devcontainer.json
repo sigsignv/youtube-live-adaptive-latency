@@ -7,7 +7,10 @@
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	"features": {
-		"ghcr.io/devcontainers/features/node:1": {}
+		"ghcr.io/devcontainers/features/node:2": {
+			"version": "24",
+			"pnpmVersion": "11"
+		}
 	},
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
@@ -19,10 +22,7 @@
 	// Configure tool-specific properties.
 	"customizations": {
 		"vscode": {
-			"extensions": [
-				"EditorConfig.EditorConfig",
-				"biomejs.biome"
-			],
+			"extensions": ["EditorConfig.EditorConfig", "biomejs.biome"],
 			"settings": {
 				"[css]": {
 					"editor.formatOnSave": true,
@@ -42,9 +42,7 @@
 				}
 			}
 		}
-	},
-
-	"runArgs": ["--env-file",".devcontainer/devcontainer.env"]
+	}
 
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
 	// "remoteUser": "root"
