@@ -2,7 +2,7 @@ import * as v from "valibot";
 
 declare global {
   interface DocumentEventMap {
-    "yt-navigate-finish": CustomEvent<NavigateFinishDetail>;
+    "yt-navigate-finish": CustomEvent<unknown>;
   }
 }
 
@@ -11,43 +11,41 @@ const NavigateFinishDetailSchema = v.object({
   response: v.object({
     playerResponse: v.object({
       videoDetails: v.object({
-        isLive: v.boolean(),
+        isLive: v.literal(true),
       }),
     }),
   }),
 });
 
-type NavigateFinishDetail = v.InferOutput<typeof NavigateFinishDetailSchema>;
-
 type NavigateCallback = () => Disposer | undefined;
 
 type Disposer = () => void;
 
-export function onNavigate(callback: NavigateCallback) {
+export function onNavigate(setup: NavigateCallback): Disposer {
   let dispose: Disposer | undefined;
 
   const runDispose = () => {
     try {
       dispose?.();
-    } catch (error) {
-      console.error("Error in navigation disposer:", error);
+    } catch (ex) {
+      console.error(ex);
     } finally {
       dispose = undefined;
     }
   };
 
-  const listener = (event: CustomEvent<NavigateFinishDetail>) => {
+  const listener = (event: CustomEvent<unknown>) => {
     runDispose();
 
-    const r = v.safeParse(NavigateFinishDetailSchema, event.detail);
-    if (!r.success || !r.output.response.playerResponse.videoDetails.isLive) {
+    const parsed = v.safeParse(NavigateFinishDetailSchema, event.detail);
+    if (!parsed.success) {
       return;
     }
 
     try {
-      dispose = callback();
-    } catch (error) {
-      console.error("Error in navigation callback:", error);
+      dispose = setup();
+    } catch (ex) {
+      console.error(ex);
     }
   };
   document.addEventListener("yt-navigate-finish", listener);
