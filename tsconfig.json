@@ -1,9 +1,7 @@
 {
   "extends": "./.wxt/tsconfig.json",
   "compilerOptions": {
-    "types": [
-      "vitest/importMeta"
-    ],
+    "types": ["vitest/importMeta"],
     "jsx": "preserve",
     "jsxImportSource": "solid-js"
   }
