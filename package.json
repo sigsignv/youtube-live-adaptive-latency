@@ -24,7 +24,7 @@
     "@biomejs/biome": "2.5.10",
     "@wxt-dev/module-solid": "^1.1.4",
     "@wxt-dev/unocss": "^1.0.1",
-    "typescript": "^6.0.3",
+    "typescript": "^7.0.2",
     "unocss": "^66.8.1",
     "vite": "^8.2.2",
     "vitest": "^4.1.11",
