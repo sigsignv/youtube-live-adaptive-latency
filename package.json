@@ -21,7 +21,7 @@
     "valibot": "^1.4.1"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.4.15",
+    "@biomejs/biome": "2.5.10",
     "@wxt-dev/module-solid": "^1.1.4",
     "@wxt-dev/unocss": "^1.0.1",
     "typescript": "^6.0.3",
